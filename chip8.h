@@ -14,7 +14,6 @@
 
 class Chip8 {
     Memory *memory;
-    Cpu cpu;
 
 
 public:
@@ -47,6 +46,8 @@ public:
         memory->init();
         cpu.init();
     }
+
+    Cpu cpu;
 };
 
 #endif //CHIP8CPP_CHIP8_H

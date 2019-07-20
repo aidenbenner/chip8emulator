@@ -31,7 +31,7 @@ public:
     }
 
     uint16_t loadWord(uint16_t ptr) {
-        return memory[ptr] | (memory[ptr + 1] << 8);
+        return memory[ptr] << 8 | memory[ptr + 1];
     }
 
     void dprint() {
