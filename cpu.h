@@ -256,7 +256,7 @@ public:
         opcode = ram->loadWord(pc);
 
         // D("CYCLE 0x" << std::hex << pc << " 0x" << opcode << " ");
-        // D(disassemble(opcode));
+        D(disassemble(opcode));
         ///D(debug_str());
         pc += 2;
 
