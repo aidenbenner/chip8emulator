@@ -7,6 +7,7 @@
 
 
 #include <sstream>
+#include <chrono>
 #include "Memory.h"
 #include "macros.h"
 
@@ -30,6 +31,7 @@ private:
 
     uint16_t delay_timer;
     uint16_t sound_timer;
+    uint64_t last_time_tick_time_ms;
 
 public:
     bool drawFlag = true;
@@ -79,7 +81,7 @@ public:
 
     void not_implemented() {
         D("WARNING - Instruction not implemented ?? 0x" << std::hex << pc << " 0x" << std::hex << opcode);
-        assert(false);
+        // assert(false);
     }
 
     std::string vstr(uint8_t X) {
@@ -254,7 +256,7 @@ public:
         opcode = ram->loadWord(pc);
 
         // D("CYCLE 0x" << std::hex << pc << " 0x" << opcode << " ");
-        D(disassemble(opcode));
+        // D(disassemble(opcode));
         ///D(debug_str());
         pc += 2;
 
@@ -394,10 +396,11 @@ public:
                 V[0xF] = 0;
                 for (int y = 0; y<N; y++) {
                     unsigned short pixel = ram->memory[I + y];
+                    int offset = (y + V[Y]) * 64 + V[X];
                     for (int x = 0; x<8; x++) {
                         if ((pixel & (0x80 >> x)) != 0) {
-                            int ind = V[X] + x + (y + V[Y]) * 64;
-                            if (gfx[ind] == 1) {
+                            int ind = offset + x;
+                            if (V[0xF] | gfx[ind] == 1) {
                                 V[0xF] = 1;
                             }
                             gfx[ind] ^= 1;
@@ -406,7 +409,7 @@ public:
                 }
                 drawFlag = true;
 
-                D("DRAW " << V[X] << " " << V[Y] << " " << N << " " << I)
+                // D("DRAW " << V[X] << " " << V[Y] << " " << N << " " << I)
                 break;
             case 0xE000:
                 switch (opcode & 0xFF) {
@@ -454,7 +457,7 @@ public:
                         // I += V[X];
                         // todo char
                         I = V[X] * 5;
-                        D(" I = " << V[X])
+                        // D(" I = " << V[X])
                         break;
                     case 0x33: {
                         int dec = V[X];
@@ -485,16 +488,25 @@ public:
                 not_implemented();
         }
 
-        if (delay_timer > 0)
-            delay_timer--;
+        uint64_t curr_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        if (sound_timer > 0)
-        {
-            if (sound_timer == 1) {
-                // TODO: beep
+        // time ticks at 60hz always
+        if (curr_time_ms - last_time_tick_time_ms > 16.666) {
+            last_time_tick_time_ms = curr_time_ms;
+
+            if (delay_timer > 0)
+                delay_timer--;
+
+            if (sound_timer > 0)
+            {
+                if (sound_timer == 1) {
+                    // TODO: beep
+                }
+                sound_timer--;
             }
-            sound_timer--;
         }
+
+
     }
 };
 

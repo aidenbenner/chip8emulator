@@ -7,7 +7,7 @@ int main() {
     Chip8 chip8;
 
     chip8.init();
-    chip8.loadRom("data/invaders.rom");
+    chip8.loadRom("data/pong2.rom");
 
     SDL_Window* window = NULL;
 
@@ -15,8 +15,8 @@ int main() {
         exit(1);
     }
 
-    int width = 1000;
-    int height = 500;
+    int width = 1000 * 1.5;
+    int height = 500 * 1.5;
     window = SDL_CreateWindow(
             "CHIP-8 CPP",
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -36,8 +36,8 @@ int main() {
         chip8.cycle();
         SDL_Event event;
 
-        // 60hz = 1/60s = 1.66666ms
-        usleep(1 * 1 * 500);
+        // 60hz = 1/60s = 16.6666ms
+        usleep(1 * 16.66 * 1000);
 
         if (chip8.cpu.drawFlag) {
             chip8.cpu.drawFlag = false;
