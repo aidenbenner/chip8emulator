@@ -16,6 +16,7 @@ public:
     Cpu(Memory *memory_) : ram(memory_) { }
 
     uint16_t gfx[64 * 32];
+    uint16_t key[16];
 private:
     Memory *ram;
     uint8_t V[16];
@@ -24,8 +25,6 @@ private:
 
     uint16_t stack[16];
     uint16_t sp;
-
-    uint16_t key = -1;
 
     uint16_t opcode;
 
@@ -67,6 +66,7 @@ public:
 
         for (int i = 0; i<16; i++) {
             V[i] = 0;
+            key[i] = 0;
         }
 
         for (int i = 0; i<80; i++) {
@@ -253,9 +253,9 @@ public:
     void cycle() {
         opcode = ram->loadWord(pc);
 
-        D("CYCLE 0x" << std::hex << pc << " 0x" << opcode << " ");
+        // D("CYCLE 0x" << std::hex << pc << " 0x" << opcode << " ");
         D(disassemble(opcode));
-        D(debug_str());
+        ///D(debug_str());
         pc += 2;
 
         uint16_t NNN = opcode & 0x0FFF;
@@ -268,7 +268,6 @@ public:
             case 0x0000:
                 switch (opcode) {
                     case 0x00E0:
-                        uint16_t gfx[64 * 32];
                         for (int i = 0; i<64 * 32; i++) {
                             gfx[i] = 0;
                         }
@@ -397,7 +396,7 @@ public:
                     unsigned short pixel = ram->memory[I + y];
                     for (int x = 0; x<8; x++) {
                         if ((pixel & (0x80 >> x)) != 0) {
-                            int ind = X + x + (y + Y) * 64;
+                            int ind = V[X] + x + (y + V[Y]) * 64;
                             if (gfx[ind] == 1) {
                                 V[0xF] = 1;
                             }
@@ -412,12 +411,12 @@ public:
             case 0xE000:
                 switch (opcode & 0xFF) {
                     case 0x9E:
-                        if (key == V[X]) {
+                        if (key[V[X]]) {
                             pc += 2;
                         }
                         break;
                     case 0xA1:
-                        if (key != V[X]) {
+                        if (!key[V[X]]) {
                             pc += 2;
                         }
                         break;
@@ -430,12 +429,18 @@ public:
                     case 0x07:
                         V[X] = delay_timer;
                         break;
-                    case 0x0A:
-                        while (true) {
-                            D("Wait on key");
+                    case 0x0A: {
+                        int k = -1;
+                        while (k == -1) {
+                            for (int i = 0; i<16; i++) {
+                                if (key[i]) {
+                                    k = i;
+                                }
+                            }
                         }
-                        V[X] = key;
+                        V[X] = k;
                         break;
+                    }
                     case 0x15:
                         delay_timer = V[X];
                         break;
@@ -462,12 +467,14 @@ public:
                         for (uint16_t i = 0; i<=X; i++) {
                             ram->memory[I + i] = V[i];
                         }
+                        I = I + X + 1;
                         break;
                     }
                     case 0x65: {
                         for (uint16_t i = 0; i<=X; i++) {
                             V[i] = ram->memory[I + i];
                         }
+                        I = I + X + 1;
                         break;
                     }
                     default:

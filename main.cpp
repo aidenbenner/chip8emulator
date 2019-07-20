@@ -7,7 +7,7 @@ int main() {
     Chip8 chip8;
 
     chip8.init();
-    chip8.loadRom("data/tetris.rom");
+    chip8.loadRom("data/invaders.rom");
 
     SDL_Window* window = NULL;
 
@@ -34,8 +34,10 @@ int main() {
 
     while (true) {
         chip8.cycle();
+        SDL_Event event;
 
-        usleep(1 * 10 * 1000);
+        // 60hz = 1/60s = 1.66666ms
+        usleep(1 * 1 * 500);
 
         if (chip8.cpu.drawFlag) {
             chip8.cpu.drawFlag = false;
@@ -48,6 +50,31 @@ int main() {
             SDL_RenderClear(renderer);
             SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
             SDL_RenderPresent(renderer);
+        }
+
+        auto setKey = [&](char key, int val) {
+            if (isdigit(key)) {
+                chip8.cpu.key[key - '0'] = val;
+            }
+            else if (isalpha(key)) {
+                if (key > 'f' || key < 'a') {
+
+                } else {
+                    chip8.cpu.key[10 + key - 'a'] = val;
+                }
+            }
+        };
+
+        while (SDL_PollEvent(&event)) {
+            char key = event.key.keysym.sym;
+            switch(event.type) {
+                case SDL_KEYDOWN:
+                    setKey(key, 1);
+                    break;
+                case SDL_KEYUP:
+                    setKey(key, 0);
+                    break;
+            }
         }
 
         chip8.setKeys();
